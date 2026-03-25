@@ -17,10 +17,16 @@ const MODEL = 'google/gemini-2.0-flash-exp:free';
  * @returns {string} The assistant's text response
  */
 async function callAI(messages) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.error('[ai.js] OPENROUTER_API_KEY is NOT set in environment!');
+    throw new Error('OPENROUTER_API_KEY is missing from environment variables');
+  }
+
   const response = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://nafdaccheck.com',
       'X-Title': 'NafdacCheck'
