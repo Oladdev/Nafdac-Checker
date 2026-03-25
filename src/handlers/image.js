@@ -1,6 +1,8 @@
+'use strict';
+
 const fetch = require('node-fetch');
 const { Buffer } = require('buffer');
-const { client, MODEL } = require('../claude');
+const { genAI, MODEL } = require('../gemini');
 const { verifyByNumber } = require('../nafdac');
 const { formatVerified, formatNotFound } = require('../utils/format');
 
@@ -34,34 +36,27 @@ async function handleImage(mediaUrl, mediaType, sendReply, res) {
       return sendReply(res, "I couldn't fetch that image. Please try again.");
     }
 
-    console.log('[image.js] Sending to Claude Vision...');
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 100,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mediaType,
-              data: base64Image
-            }
-          },
-          {
-            type: 'text',
-            text: `Look at this image of a product pack, label, or blister strip.
+    console.log('[image.js] Sending to Gemini Vision...');
+    const model = genAI.getGenerativeModel({ model: MODEL });
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: mediaType,
+          data: base64Image
+        }
+      },
+      {
+        text: `Look at this image of a product pack, label, or blister strip.
 Find the NAFDAC registration number. It usually appears as: XX-XXXX or A1-5645 format.
 Return ONLY the registration number if found, or "NOT_FOUND" if you cannot see one.
 Return nothing else.`
-          }
-        ]
-      }]
-    });
+      }
+    ]);
 
-    const extracted = response.content[0].text.trim().toUpperCase();
-    console.log('[image.js] Claude Vision extracted:', extracted);
+    const response = await result.response;
+    const extracted = response.text().trim().toUpperCase();
+    console.log('[image.js] Gemini Vision extracted:', extracted);
     
     if (extracted === 'NOT_FOUND' || extracted === '"NOT_FOUND"' || !extracted) {
       return sendReply(res, `📷 I couldn't read a NAFDAC number from that image.
