@@ -2,7 +2,7 @@
 
 const fetch = require('node-fetch');
 const { Buffer } = require('buffer');
-const { genAI, MODEL } = require('../gemini');
+const { callAI } = require('../ai');
 const { verifyByNumber } = require('../nafdac');
 const { formatVerified, formatNotFound } = require('../utils/format');
 
@@ -36,29 +36,34 @@ async function handleImage(mediaUrl, mediaType, sendReply, res) {
       return sendReply(res, "I couldn't fetch that image. Please try again.");
     }
 
-    console.log('[image.js] Sending to Gemini Vision...');
-    const model = genAI.getGenerativeModel({ model: MODEL });
-
-    const result = await model.generateContent([
+    console.log('[image.js] Sending to AI Vision...');
+    
+    // OpenRouter uses OpenAI vision format
+    const extracted = await callAI([
       {
-        inlineData: {
-          mimeType: mediaType,
-          data: base64Image
-        }
-      },
-      {
-        text: `Look at this image of a product pack, label, or blister strip.
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:${mediaType};base64,${base64Image}`
+            }
+          },
+          {
+            type: 'text',
+            text: `Look at this image of a product pack, label, or blister strip.
 Find the NAFDAC registration number. It usually appears as: XX-XXXX or A1-5645 format.
 Return ONLY the registration number if found, or "NOT_FOUND" if you cannot see one.
 Return nothing else.`
+          }
+        ]
       }
     ]);
 
-    const response = await result.response;
-    const extracted = response.text().trim().toUpperCase();
-    console.log('[image.js] Gemini Vision extracted:', extracted);
+    console.log('[image.js] AI Vision extracted:', extracted);
+    const cleaned = extracted.toUpperCase().replace(/['"]/g, '').trim();
     
-    if (extracted === 'NOT_FOUND' || extracted === '"NOT_FOUND"' || !extracted) {
+    if (cleaned === 'NOT_FOUND' || !cleaned) {
       return sendReply(res, `📷 I couldn't read a NAFDAC number from that image.
 
 Try:
@@ -67,13 +72,11 @@ Try:
 • Or type the number directly (e.g. A1-5645)`);
     }
 
-    // Clean up the extracted value - remove quotes, extra text
-    const cleanedNumber = extracted.replace(/['"]/g, '').trim();
-    console.log('[image.js] Cleaned number:', cleanedNumber);
+    console.log('[image.js] Cleaned number:', cleaned);
 
-    const productInfo = await verifyByNumber(cleanedNumber);
+    const productInfo = await verifyByNumber(cleaned);
     if (!productInfo) {
-      return sendReply(res, formatNotFound(cleanedNumber));
+      return sendReply(res, formatNotFound(cleaned));
     }
     return sendReply(res, formatVerified(productInfo));
 

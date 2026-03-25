@@ -1,6 +1,6 @@
 'use strict';
 
-const { genAI, MODEL } = require('../gemini');
+const { callAI } = require('../ai');
 const { verifyByNumber } = require('../nafdac');
 const { formatVerified, formatNotFound } = require('../utils/format');
 
@@ -20,10 +20,8 @@ async function handleText(messageBody, sendReply, res) {
       return sendReply(res, formatVerified(productInfo));
     }
 
-    // Otherwise, send to Gemini for intent detection + number resolution
-    const model = genAI.getGenerativeModel({ model: MODEL });
-
-    const prompt = `You are a NAFDAC product verification assistant. A Nigerian user has sent a message that may contain a product name, question, or unclear text.
+    // Otherwise, send to AI for intent detection + number resolution
+    const systemPrompt = `You are a NAFDAC product verification assistant. A Nigerian user has sent a message that may contain a product name, question, or unclear text.
 
 Your ONLY job is to extract a NAFDAC registration number to look up.
 
@@ -37,17 +35,17 @@ Examples:
 User: "lonart ds"        → A1-5645
 User: "coartem tablet"   → A4-0912
 User: "paracetamol"      → UNKNOWN (too generic, many reg numbers)
-User: "A1-5645"          → A1-5645
+User: "A1-5645"          → A1-5645`;
 
-User message: "${input}"`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const extracted = response.text().trim().toUpperCase();
+    const extracted = await callAI([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: input }
+    ]);
     
-    console.log('[text.js] Gemini extracted:', extracted);
+    console.log('[text.js] AI extracted:', extracted);
+    const cleaned = extracted.toUpperCase().trim();
 
-    if (extracted === 'UNKNOWN' || !extracted) {
+    if (cleaned === 'UNKNOWN' || !cleaned) {
       return sendReply(res, `🤔 I couldn't identify a specific product from that.
 
 Try:
@@ -56,9 +54,9 @@ Try:
 • Sending a photo of the product pack`);
     }
 
-    const productInfo = await verifyByNumber(extracted);
+    const productInfo = await verifyByNumber(cleaned);
     if (!productInfo) {
-      return sendReply(res, formatNotFound(extracted));
+      return sendReply(res, formatNotFound(cleaned));
     }
     return sendReply(res, formatVerified(productInfo));
     
