@@ -9,7 +9,7 @@
 const fetch = require('node-fetch');
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'google/gemini-2.0-flash-exp:free';
+const MODEL = 'google/gemma-3-27b-it:free';
 
 /**
  * Call OpenRouter chat completions API.
