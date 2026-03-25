@@ -23,14 +23,18 @@ async function downloadImageAsBase64(mediaUrl) {
 
 async function handleImage(mediaUrl, mediaType, sendReply, res) {
   try {
+    console.log('[image.js] Starting image handler. MediaUrl:', mediaUrl, 'MediaType:', mediaType);
+    
     let base64Image;
     try {
       base64Image = await downloadImageAsBase64(mediaUrl);
+      console.log('[image.js] Image downloaded. Base64 length:', base64Image.length);
     } catch (err) {
-      console.error('Image Download Error:', err);
+      console.error('[image.js] Image Download Error:', err.message);
       return sendReply(res, "I couldn't fetch that image. Please try again.");
     }
 
+    console.log('[image.js] Sending to Claude Vision...');
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 100,
@@ -57,8 +61,9 @@ Return nothing else.`
     });
 
     const extracted = response.content[0].text.trim().toUpperCase();
+    console.log('[image.js] Claude Vision extracted:', extracted);
     
-    if (extracted === 'NOT_FOUND' || !extracted) {
+    if (extracted === 'NOT_FOUND' || extracted === '"NOT_FOUND"' || !extracted) {
       return sendReply(res, `📷 I couldn't read a NAFDAC number from that image.
 
 Try:
@@ -67,14 +72,18 @@ Try:
 • Or type the number directly (e.g. A1-5645)`);
     }
 
-    const productInfo = await verifyByNumber(extracted);
+    // Clean up the extracted value - remove quotes, extra text
+    const cleanedNumber = extracted.replace(/['"]/g, '').trim();
+    console.log('[image.js] Cleaned number:', cleanedNumber);
+
+    const productInfo = await verifyByNumber(cleanedNumber);
     if (!productInfo) {
-      return sendReply(res, formatNotFound(extracted));
+      return sendReply(res, formatNotFound(cleanedNumber));
     }
     return sendReply(res, formatVerified(productInfo));
 
   } catch (error) {
-    console.error('Image Vision Error:', error);
+    console.error('[image.js] Image Vision Error:', error.message);
     return sendReply(res, "Image processing failed. Please type the NAFDAC number instead.");
   }
 }

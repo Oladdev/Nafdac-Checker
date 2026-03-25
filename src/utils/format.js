@@ -32,19 +32,26 @@ function formatVerified(product) {
     manufacturer = manufacturer.substring(0, 37) + '...';
   }
 
-  let msg = `✅ VERIFIED\n\nProduct: ${name}\nManufacturer: ${manufacturer}\nReg No: ${regNo}\nCategory: ${category}`;
+  let msg = `✅ *VERIFIED*\n\n`;
+  msg += `📦 *${name}*\n\n`;
+  msg += `🏭 Manufacturer: ${manufacturer}\n`;
+  msg += `🔢 Reg No: ${regNo}\n`;
+  msg += `📂 Category: ${category}\n`;
 
   // Only include dates if they are present and not null/undefined
   const approved = formatDate(product.approvedDate);
   const expiry = formatDate(product.expiryDate);
-  if (approved) {
-    msg += `\nApproved: ${approved}`;
-  }
-  if (expiry) {
-    msg += `\nExpiry: ${expiry}`;
+  if (approved || expiry) {
+    msg += `\n`;
+    if (approved) {
+      msg += `📅 Approved: ${approved}\n`;
+    }
+    if (expiry) {
+      msg += `⏳ Expiry: ${expiry}\n`;
+    }
   }
 
-  msg += '\n\nRegistered with NAFDAC.\nAlways purchase from a licensed vendor.';
+  msg += `\n✅ Registered with NAFDAC.\n🏥 Always purchase from a licensed vendor.`;
 
   return msg;
 }
