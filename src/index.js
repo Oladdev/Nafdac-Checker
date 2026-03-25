@@ -21,11 +21,19 @@ app.use(express.json());
 // ─────────────────────────────────────────
 // Helper: Send a TwiML WhatsApp reply
 // ─────────────────────────────────────────
+function escapeXml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function sendReply(res, message) {
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Message>
-    <Body>${message}</Body>
+    <Body>${escapeXml(message)}</Body>
   </Message>
 </Response>`;
 
