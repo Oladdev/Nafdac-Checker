@@ -3,7 +3,6 @@ const { Buffer } = require('buffer');
 const { client, MODEL } = require('../claude');
 const { verifyByNumber } = require('../nafdac');
 const { formatVerified, formatNotFound } = require('../utils/format');
-const index = require('../index');
 
 async function downloadImageAsBase64(mediaUrl) {
   const auth = Buffer.from(
@@ -22,14 +21,14 @@ async function downloadImageAsBase64(mediaUrl) {
   return buffer.toString('base64');
 }
 
-async function handleImage(mediaUrl, mediaType, res) {
+async function handleImage(mediaUrl, mediaType, sendReply, res) {
   try {
     let base64Image;
     try {
       base64Image = await downloadImageAsBase64(mediaUrl);
     } catch (err) {
       console.error('Image Download Error:', err);
-      return index.sendReply(res, "I couldn't fetch that image. Please try again.");
+      return sendReply(res, "I couldn't fetch that image. Please try again.");
     }
 
     const response = await client.messages.create({
@@ -60,7 +59,7 @@ Return nothing else.`
     const extracted = response.content[0].text.trim().toUpperCase();
     
     if (extracted === 'NOT_FOUND' || !extracted) {
-      return index.sendReply(res, `📷 I couldn't read a NAFDAC number from that image.
+      return sendReply(res, `📷 I couldn't read a NAFDAC number from that image.
 
 Try:
 • Taking a clearer, well-lit photo
@@ -70,13 +69,13 @@ Try:
 
     const productInfo = await verifyByNumber(extracted);
     if (!productInfo) {
-      return index.sendReply(res, formatNotFound(extracted));
+      return sendReply(res, formatNotFound(extracted));
     }
-    return index.sendReply(res, formatVerified(productInfo));
+    return sendReply(res, formatVerified(productInfo));
 
   } catch (error) {
     console.error('Image Vision Error:', error);
-    return index.sendReply(res, "Image processing failed. Please type the NAFDAC number instead.");
+    return sendReply(res, "Image processing failed. Please type the NAFDAC number instead.");
   }
 }
 

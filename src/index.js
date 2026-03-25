@@ -60,13 +60,13 @@ app.post('/webhook', async (req, res) => {
   try {
     if (numMedia > 0 && mediaUrl) {
       // Image message — Agent 2 will implement
-      await handleImage(mediaUrl, mediaType, res);
+      await handleImage(mediaUrl, mediaType, sendReply, res);
     } else if (/^(hi|hello|hey|start)/i.test(body)) {
       // Greeting — send onboarding message
       handleOnboard(sendReply, res);
     } else {
       // Text message (NAFDAC number or drug name) — Agent 2 will implement
-      await handleText(body, res);
+      await handleText(body, sendReply, res);
     }
   } catch (err) {
     console.error('[webhook] Unhandled error:', err.message);

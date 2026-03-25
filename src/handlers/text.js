@@ -1,9 +1,8 @@
 const { client, MODEL } = require('../claude');
 const { verifyByNumber } = require('../nafdac');
 const { formatVerified, formatNotFound } = require('../utils/format');
-const index = require('../index');
 
-async function handleText(messageBody, res) {
+async function handleText(messageBody, sendReply, res) {
   try {
     const input = messageBody.trim().toLowerCase();
     
@@ -14,9 +13,9 @@ async function handleText(messageBody, res) {
       const regNoToVerify = input.toUpperCase();
       const productInfo = await verifyByNumber(regNoToVerify);
       if (!productInfo) {
-        return index.sendReply(res, formatNotFound(regNoToVerify));
+        return sendReply(res, formatNotFound(regNoToVerify));
       }
-      return index.sendReply(res, formatVerified(productInfo));
+      return sendReply(res, formatVerified(productInfo));
     }
 
     // Otherwise, send to Claude for intent detection + number resolution
@@ -46,7 +45,7 @@ User: "A1-5645"          → A1-5645`;
     const extracted = response.content[0].text.trim().toUpperCase();
     
     if (extracted === 'UNKNOWN' || !extracted) {
-      return index.sendReply(res, `🤔 I couldn't identify a specific product from that.
+      return sendReply(res, `🤔 I couldn't identify a specific product from that.
 
 Try:
 • Sending the NAFDAC number directly (e.g. A1-5645)
@@ -56,13 +55,13 @@ Try:
 
     const productInfo = await verifyByNumber(extracted);
     if (!productInfo) {
-      return index.sendReply(res, formatNotFound(extracted));
+      return sendReply(res, formatNotFound(extracted));
     }
-    return index.sendReply(res, formatVerified(productInfo));
+    return sendReply(res, formatVerified(productInfo));
     
   } catch (error) {
     console.error('Text Handler Error:', error);
-    return index.sendReply(res, "Sorry, I couldn't process that right now. Please try sending the NAFDAC number directly (e.g. A1-5645).");
+    return sendReply(res, "Sorry, I couldn't process that right now. Please try sending the NAFDAC number directly (e.g. A1-5645).");
   }
 }
 
