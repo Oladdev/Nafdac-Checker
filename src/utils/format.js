@@ -11,10 +11,20 @@
  * @param {Object} product - Product object from 9jaCheckr API
  * @returns {string} WhatsApp-ready message
  */
+function formatDate(isoString) {
+  if (!isoString) return null;
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch (e) {
+    return isoString;
+  }
+}
+
 function formatVerified(product) {
   const name = product.name || 'Unknown Product';
-  const nafdacNumber = product.nafdacNumber || 'N/A';
-  const status = product.status || 'N/A';
+  const regNo = product.nafdac || 'N/A';
+  const category = product.category || 'N/A';
 
   // Truncate manufacturer if needed to stay within char limits
   let manufacturer = product.manufacturer || 'N/A';
@@ -22,14 +32,16 @@ function formatVerified(product) {
     manufacturer = manufacturer.substring(0, 37) + '...';
   }
 
-  let msg = `✅ VERIFIED\n\nProduct: ${name}\nManufacturer: ${manufacturer}\nReg No: ${nafdacNumber}\nStatus: ${status}`;
+  let msg = `✅ VERIFIED\n\nProduct: ${name}\nManufacturer: ${manufacturer}\nReg No: ${regNo}\nCategory: ${category}`;
 
   // Only include dates if they are present and not null/undefined
-  if (product.approvalDate) {
-    msg += `\nManufacturing Date: ${product.approvalDate}`;
+  const approved = formatDate(product.approvedDate);
+  const expiry = formatDate(product.expiryDate);
+  if (approved) {
+    msg += `\nApproved: ${approved}`;
   }
-  if (product.expiryDate) {
-    msg += `\nExpiry Date: ${product.expiryDate}`;
+  if (expiry) {
+    msg += `\nExpiry: ${expiry}`;
   }
 
   msg += '\n\nRegistered with NAFDAC.\nAlways purchase from a licensed vendor.';

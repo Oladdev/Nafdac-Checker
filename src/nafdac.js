@@ -37,10 +37,12 @@ async function verifyByNumber(regNo) {
     }
 
     const data = await response.json();
-    console.log('[nafdac.js] Raw API response:', JSON.stringify(data, null, 2));
 
-    // Return the product object as-is (pass-through from API)
-    return data || null;
+    // API returns { ok: true, product: { ... } }
+    if (data && data.ok && data.product) {
+      return data.product;
+    }
+    return null;
   } catch (err) {
     // Network error, timeout, or JSON parse error
     console.error('[nafdac.js] API call failed:', err.message);
