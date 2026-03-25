@@ -37,6 +37,7 @@ async function verifyByNumber(regNo) {
     }
 
     const data = await response.json();
+    console.log('[nafdac.js] Raw API response:', JSON.stringify(data, null, 2));
 
     // Return the product object as-is (pass-through from API)
     return data || null;
