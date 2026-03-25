@@ -18,8 +18,8 @@ const MODEL = 'google/gemini-2.0-flash-exp:free';
  */
 async function callAI(messages) {
   const apiKey = process.env.OPENROUTER_API_KEY;
+  console.log('[ai.js] API key loaded:', apiKey ? `${apiKey.substring(0, 10)}... (length: ${apiKey.length})` : 'NOT SET');
   if (!apiKey) {
-    console.error('[ai.js] OPENROUTER_API_KEY is NOT set in environment!');
     throw new Error('OPENROUTER_API_KEY is missing from environment variables');
   }
 
