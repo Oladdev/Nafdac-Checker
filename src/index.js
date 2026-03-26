@@ -30,6 +30,11 @@ function escapeXml(str) {
 }
 
 function sendReply(res, message) {
+  if (res.headersSent) {
+    console.error('[sendReply] Response already sent! Cannot send another reply.');
+    return;
+  }
+
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Message>
@@ -37,6 +42,7 @@ function sendReply(res, message) {
   </Message>
 </Response>`;
 
+  console.log(`[sendReply] Sending TwiML (${twiml.length} chars)`);
   res.setHeader('Content-Type', 'text/xml');
   res.send(twiml);
 }
